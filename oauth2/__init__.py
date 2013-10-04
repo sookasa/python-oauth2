@@ -811,7 +811,16 @@ class SignatureMethod(object):
         """Returns whether the given signature is the correct signature for
         the given consumer and token signing the given request."""
         built = self.sign(request, consumer, token)
-        return built == signature
+
+        # If the lengths are not equal return False.
+        if len(built) != len(signature):
+            return False
+
+        # Make the check constant time.
+        result = 0
+        for a, b in zip(built, signature):
+            result |= ord(a) ^ ord(b) 
+        return result == 0
 
 
 class SignatureMethod_HMAC_SHA1(SignatureMethod):
@@ -841,21 +850,6 @@ class SignatureMethod_HMAC_SHA1(SignatureMethod):
 
         # Calculate the digest base 64.
         return binascii.b2a_base64(hashed.digest())[:-1]
-
-    def check(self, request, consumer, token, signature):
-        """Returns whether the given signature is the correct signature for
-        the given consumer and token signing the given request."""
-        built = self.sign(request, consumer, token)
-
-        # If the lengths are not equal return False.
-        if len(built) != len(signature):
-            return False
-
-        # Make the check constant time.
-        result = 0
-        for a, b in zip(built, signature):
-            result |= ord(a) ^ ord(b) 
-        return result == 0
 
 
 class SignatureMethod_PLAINTEXT(SignatureMethod):
